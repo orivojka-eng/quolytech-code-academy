@@ -1,4 +1,5 @@
 import './styles/notebooklm-theme.css';
+import './styles/duolingo-theme.css';
 import { allCourses, capstoneProjects, findLessonById, getNextAndPrevLessons, searchAcademy } from './curriculum/index.js';
 import { loadAcademyState, saveAcademyState, markLessonCompleted, recordQuizScore, saveCodeDraft, getCodeDraft } from './services/storage.js';
 import { checkAchievements } from './services/achievements.js';
@@ -9,9 +10,11 @@ import { renderDashboard } from './components/dashboard.js';
 import { renderPlayground } from './components/playground.js';
 import { renderProjectsHub } from './components/projects.js';
 import { renderAdminPanel } from './components/admin.js';
+import { renderIntroPage, renderDuolingoPath } from './components/intro.js';
+import { sounds } from './services/sound.js';
 
 let appState = loadAcademyState();
-let currentView = "learn"; // "learn" | "playground" | "projects" | "dashboard" | "admin"
+let currentView = "intro"; // "intro" | "path" | "learn" | "playground" | "projects" | "dashboard" | "admin"
 let activeLesson = null;
 let activeCourse = null;
 let currentChatHistory = [
@@ -57,8 +60,14 @@ function renderApp() {
 
         <!-- Navigation Tabs -->
         <nav class="nav-tabs">
+          <button class="nav-tab-btn ${currentView === 'intro' ? 'active' : ''}" onclick="switchView('intro')">
+            👋 Intro
+          </button>
+          <button class="nav-tab-btn ${currentView === 'path' ? 'active' : ''}" onclick="switchView('path')">
+            🦉 Adventure Map
+          </button>
           <button class="nav-tab-btn ${currentView === 'learn' ? 'active' : ''}" onclick="switchView('learn')">
-            📖 Learn
+            📖 Studio
           </button>
           <button class="nav-tab-btn ${currentView === 'playground' ? 'active' : ''}" onclick="switchView('playground')">
             ⚡ Playground
@@ -119,6 +128,12 @@ function renderApp() {
 }
 
 function renderWorkspaceContent() {
+  if (currentView === "intro") {
+    return `<div style="grid-column: 1 / -1; height: 100%; overflow-y: auto;">${renderIntroPage(appState)}</div>`;
+  }
+  if (currentView === "path") {
+    return `<div style="grid-column: 1 / -1; height: 100%; overflow-y: auto;">${renderDuolingoPath(appState)}</div>`;
+  }
   if (currentView === "playground") {
     return `<div style="grid-column: 1 / -1; height: 100%;">${renderPlayground()}</div>`;
   }
@@ -358,6 +373,15 @@ function renderLessonStudio() {
 }
 
 // Global window actions
+window.getAcademyLanguage = function() {
+  return appState.settings.language;
+};
+
+window.enterAcademy = function(targetView = 'learn') {
+  currentView = targetView;
+  renderApp();
+};
+
 window.switchView = function(view) {
   currentView = view;
   renderApp();

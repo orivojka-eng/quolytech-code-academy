@@ -1,0 +1,279 @@
+/* Duolingo Vibrant Gamified Theme */
+:root {
+  --duo-green: #58cc02;
+  --duo-green-dark: #58a700;
+  --duo-green-light: #d7ffb8;
+
+  --duo-blue: #1cb0f6;
+  --duo-blue-dark: #1899d6;
+  --duo-blue-light: #ddf4ff;
+
+  --duo-gold: #ffc800;
+  --duo-gold-dark: #e5a500;
+  --duo-gold-light: #fff5c0;
+
+  --duo-red: #ff4b4b;
+  --duo-red-dark: #ea2b2b;
+
+  --duo-purple: #ce82ff;
+  --duo-purple-dark: #a559d8;
+
+  --duo-gray: #e5e5e5;
+  --duo-gray-dark: #afafaf;
+}
+
+/* 3D Chunky Buttons */
+.duo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Plus Jakarta Sans', var(--font-sans);
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 14px 28px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.duo-btn:active {
+  transform: translateY(4px);
+}
+
+.duo-btn-green {
+  background-color: var(--duo-green);
+  color: #ffffff;
+  border-color: var(--duo-green);
+  box-shadow: 0 4px 0 var(--duo-green-dark);
+}
+
+.duo-btn-green:active {
+  box-shadow: 0 0 0 var(--duo-green-dark);
+}
+
+.duo-btn-blue {
+  background-color: var(--duo-blue);
+  color: #ffffff;
+  border-color: var(--duo-blue);
+  box-shadow: 0 4px 0 var(--duo-blue-dark);
+}
+
+.duo-btn-blue:active {
+  box-shadow: 0 0 0 var(--duo-blue-dark);
+}
+
+.duo-btn-gold {
+  background-color: var(--duo-gold);
+  color: #4b3600;
+  border-color: var(--duo-gold);
+  box-shadow: 0 4px 0 var(--duo-gold-dark);
+}
+
+.duo-btn-gold:active {
+  box-shadow: 0 0 0 var(--duo-gold-dark);
+}
+
+.duo-btn-white {
+  background-color: #ffffff;
+  color: #1cb0f6;
+  border: 2px solid #e5e5e5;
+  box-shadow: 0 4px 0 #e5e5e5;
+}
+
+.duo-btn-white:active {
+  box-shadow: 0 0 0 #e5e5e5;
+}
+
+/* Card Selection Grid */
+.duo-option-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-subtle);
+  border-bottom: 5px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 18px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.15s ease;
+}
+
+.duo-option-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--duo-blue);
+  border-bottom-color: var(--duo-blue-dark);
+  background: rgba(28, 176, 246, 0.05);
+}
+
+.duo-option-card.selected {
+  border-color: var(--duo-green);
+  border-bottom-color: var(--duo-green-dark);
+  background: rgba(88, 204, 2, 0.08);
+}
+
+/* Speech Bubble */
+.duo-speech-bubble {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 18px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: var(--text-main);
+  max-width: 500px;
+}
+
+.duo-speech-bubble::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 12px solid var(--border-subtle);
+}
+
+.duo-speech-bubble::after {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 10px solid var(--bg-surface);
+}
+
+/* Mascot SVG Container & Bouncing Animation */
+@keyframes duoBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-1deg); }
+}
+
+.duo-mascot {
+  animation: duoBounce 3s ease-in-out infinite;
+  display: inline-block;
+  cursor: pointer;
+}
+
+/* Interactive Jigsaw Code Blocks */
+.duo-puzzle-block {
+  padding: 10px 18px;
+  background: var(--bg-card);
+  border: 2px solid var(--border-subtle);
+  border-bottom: 4px solid var(--border-subtle);
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: #38bdf8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.duo-puzzle-block:hover {
+  border-color: var(--duo-blue);
+  border-bottom-color: var(--duo-blue-dark);
+  transform: translateY(-2px);
+}
+
+.duo-puzzle-block.slotted {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.duo-puzzle-slot {
+  min-height: 48px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px dashed var(--border-subtle);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  flex-wrap: wrap;
+}
+
+/* Stepping Stones Adventure Path */
+.duo-path-wrapper {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.duo-path-node {
+  width: 76px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  user-select: none;
+  border: 3px solid transparent;
+}
+
+.duo-path-node:active {
+  transform: translateY(4px);
+}
+
+.duo-node-green {
+  background: var(--duo-green);
+  border-color: var(--duo-green);
+  box-shadow: 0 8px 0 var(--duo-green-dark);
+}
+
+.duo-node-blue {
+  background: var(--duo-blue);
+  border-color: var(--duo-blue);
+  box-shadow: 0 8px 0 var(--duo-blue-dark);
+}
+
+.duo-node-gold {
+  background: var(--duo-gold);
+  border-color: var(--duo-gold);
+  box-shadow: 0 8px 0 var(--duo-gold-dark);
+}
+
+.duo-node-locked {
+  background: #334155;
+  border-color: #334155;
+  box-shadow: 0 8px 0 #1e293b;
+  opacity: 0.6;
+}
+
+.duo-node-crown {
+  position: absolute;
+  top: -12px;
+  right: -6px;
+  background: var(--duo-gold);
+  color: #4b3600;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
