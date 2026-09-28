@@ -1,49 +1,45 @@
-# QuolyTech Code Academy (NotebookLM Edition)
+# QuolyTech CodeCamp
 
-> An interactive, zero-to-hero programming learning platform inspired by freeCodeCamp and Google NotebookLM's studio research aesthetic.
+> An interactive, zero-to-hero programming learning platform built in the authentic, world-renowned **freeCodeCamp** style and architecture.
 
-Built by **QuolyTech** to teach absolute beginners how to code and build modern React web applications from scratch.
+Created by **QuolyTech** to teach complete beginners how to code from zero and become capable of building production React web applications.
 
 ---
 
-## 🌟 Key Highlights
+## 🌟 Architecture & Features
 
-### 1. Bilingual Dual-Layer Learning (English + Albanian / Shqip)
-- Complete curriculum taught in simple, accessible English.
-- Instant, natural Albanian (**Shqip**) pedagogical layer for every concept, real-world metaphor, and coding exercise.
+### 1. The Iconic 3-Pane Coding Workspace
+- **Left Pane (Instructions, Theory & Tests)**:
+  - Step breadcrumb and challenge title
+  - Concept theory with **prominent illustrative code examples**
+  - Line-by-line syntax explanation
+  - Real-world mental models & analogies
+  - Bilingual **Albanian (Shqip)** explanation layer with one-click toggle
+  - Exact challenge instructions and requirements
+  - Signature freeCodeCamp Gold **"Check Your Code (Ctrl + Enter)"** button
+  - Test runner feedback showing real-time green checkmarks ✓ or red failure warnings ✗
+  - Quick action toolbar: **"Ask for Help"**, **"Get a Hint"**, and **"Reset Code"**
+- **Middle Pane (Code Editor)**:
+  - Tabbed file interface (`index.html`, `styles.css`, `script.js`, `App.jsx`)
+  - Full monospace code editor with auto-draft persistence
+- **Right Pane (Live Preview & Console)**:
+  - Live in-browser rendering sandbox
+  - Embedded console capturing `console.log`, `console.warn`, and `console.error` in real-time
 
-### 2. Multi-Course Curriculum (Zero to React Developer)
-- **Course 0: Computer & Web Basics**: How computers think, binary bits, client-server architecture, browsers, DNS, and terminals.
-- **Course 1: HTML Architecture**: Tags, headings, links, media, accessibility (alt, labels), semantic layout (header, nav, main, section, footer), and forms.
-- **Course 2: Modern CSS Styling**: Selectors, colors, the 4-layer Box Model, Flexbox layout engine, responsive design, and animations.
-- **Course 3: JavaScript Engine**: Variables (let, const), types, functions, arrow syntax, arrays (.map, .filter), DOM manipulation, and click event listeners.
-- **Course 4: Modern React Ecosystem**: React mental model, Virtual DOM, JSX rules, reusable components, props, reactive state (`useState`), and live component rendering.
+### 2. Built-In Pedagogical Instructor (Zero API Key Required)
+- Intelligent built-in assistance without requiring any external keys or configurations.
+- Offers instant code diagnostics, beginner syntax hints, and explanations in both English and Albanian.
 
-### 3. NotebookLM Studio Aesthetic
-- Calm, distraction-free research interface with dark/light themes.
-- 3-column workspace: Sources/Curriculum Explorer, Interactive Studio Notebook, and Gemini AI Co-Teacher.
-- Simulated **NotebookLM Audio Overview**: podcast-style conversational deep-dive between academy instructors.
+### 3. Comprehensive Curriculum Tracks
+- **Track 0: Computer & Web Basics** (Bits, Client-Server, HTTP, Browsers, Terminal)
+- **Track 1: HTML Architecture** (Semantic layout, Tags, Headings, Links, Media, Forms)
+- **Track 2: Modern CSS Styling** (Selectors, Colors, Box Model, Flexbox, Grid)
+- **Track 3: JavaScript Engine** (Variables, Functions, Arrays, Objects, DOM, Events)
+- **Track 4: Modern React Ecosystem** (JSX, Components, Props, Reactive `useState`, Live Babel Execution)
 
-### 4. Live In-Browser Execution & Test Runner
-- Real-time HTML, CSS, JavaScript sandbox with iframe isolation.
-- In-browser **React 18 & Babel** execution engine: write real JSX and watch it mount live.
-- Automated unit test validation assertions with instant pass/fail feedback and achievement celebrations.
-- Console drawer capturing `console.log`, `console.warn`, and `console.error` in real-time.
-
-### 5. Google Gemini AI Co-Teacher
-- Connected to Google Gemini 1.5 Flash endpoint for real-time pedagogical answers, code diagnostics, and metaphor explanations.
-- Built-in offline intelligent fallback engine when running without an API key.
-- Dynamic task generation matching the student's current proficiency level.
-
-### 6. Interactive Code Playground & Capstone Projects
-- Standalone multi-tab playground with templates (React Counter, React Todo, HTML Landing).
-- Hands-on Capstone Projects: Developer Profile Card, Sprint Task Tracker, and SaaS Executive Analytics Dashboard.
-
-### 7. Gamification & Progression
-- Daily streak tracker 🔥
-- Progress dashboard with course % completion meters.
-- Developer achievement badges.
-- Verifiable Certificate of Completion preview generator.
+### 4. Certification & Curriculum Directory
+- Track overview with collapsible tracks, lesson completion checkboxes, and progress meters.
+- Interactive code playground and portfolio capstone projects.
 
 ---
 
@@ -68,4 +64,4 @@ Visit `http://localhost:5178` in your browser.
 ---
 
 ## 🛡️ License
-Released under the MIT License. Developed with pride by **QuolyTech**.
+Released under the MIT License. Developed by **QuolyTech**.

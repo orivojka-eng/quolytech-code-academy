@@ -1,0 +1,634 @@
+/* Authentic freeCodeCamp Inspired Theme & Challenge Layout */
+:root {
+  --fcc-navy-dark: #0a0a23;       /* Signature freeCodeCamp root background */
+  --fcc-navy-surface: #1b1b32;    /* Card & panel surface */
+  --fcc-navy-light: #2a2a40;      /* Hover & active containers */
+  --fcc-navy-border: #3b3b4f;     /* Subtle borders */
+  
+  --fcc-gold: #feac32;            /* Signature primary gold action button */
+  --fcc-gold-hover: #f8981d;
+  --fcc-purple: #5a01a7;          /* Certification badges */
+  --fcc-blue: #99c9ff;            /* Code keywords & links */
+  --fcc-green: #00471b;           /* Test pass banner */
+  --fcc-green-light: #acd157;     /* Test pass text / icon */
+  --fcc-red-dark: #5a0110;        /* Test fail banner */
+  --fcc-red-light: #f58383;       /* Test fail text */
+
+  --text-main: #f5f6f7;
+  --text-muted: #d0d0d5;
+  --text-faint: #858598;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+}
+
+[data-theme="light"] {
+  --fcc-navy-dark: #ffffff;
+  --fcc-navy-surface: #f5f6f7;
+  --fcc-navy-light: #e5e5e8;
+  --fcc-navy-border: #d0d0d5;
+  
+  --text-main: #0a0a23;
+  --text-muted: #2a2a40;
+  --text-faint: #5a5a6e;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  background-color: var(--fcc-navy-dark);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Main App Wrapper */
+.fcc-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* freeCodeCamp Top Navigation Bar */
+.fcc-nav {
+  height: 48px;
+  background-color: var(--fcc-navy-dark);
+  border-bottom: 1px solid var(--fcc-navy-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.fcc-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.fcc-brand-logo {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fcc-brand-logo span {
+  color: var(--fcc-gold);
+}
+
+.fcc-nav-search {
+  display: flex;
+  align-items: center;
+  background: var(--fcc-navy-surface);
+  border: 1px solid var(--fcc-navy-border);
+  border-radius: 4px;
+  padding: 4px 12px;
+  width: 320px;
+  max-width: 40vw;
+}
+
+.fcc-nav-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 13px;
+  width: 100%;
+}
+
+.fcc-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* freeCodeCamp Button Styles */
+.fcc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fcc-btn-gold {
+  background-color: var(--fcc-gold);
+  color: #0a0a23;
+  border-color: var(--fcc-gold);
+}
+
+.fcc-btn-gold:hover {
+  background-color: var(--fcc-gold-hover);
+}
+
+.fcc-btn-navy {
+  background-color: var(--fcc-navy-surface);
+  color: var(--text-main);
+  border-color: var(--fcc-navy-border);
+}
+
+.fcc-btn-navy:hover {
+  background-color: var(--fcc-navy-light);
+}
+
+/* The Iconic 3-Pane Challenge Workspace */
+.fcc-workspace {
+  display: grid;
+  grid-template-columns: 38% 34% 28%;
+  height: calc(100vh - 48px);
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--fcc-navy-dark);
+}
+
+/* Left Pane: Instructions, Theory, Code Examples, and Tests */
+.fcc-pane-instructions {
+  background: var(--fcc-navy-dark);
+  border-right: 1px solid var(--fcc-navy-border);
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 24px 28px 100px;
+}
+
+.fcc-step-badge {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--fcc-gold);
+  margin-bottom: 4px;
+}
+
+.fcc-challenge-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.fcc-meta-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.fcc-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--fcc-navy-surface);
+  border: 1px solid var(--fcc-navy-border);
+  color: var(--text-muted);
+}
+
+/* Instructions Description */
+.fcc-description {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.fcc-description p {
+  margin-bottom: 12px;
+}
+
+.fcc-description code {
+  font-family: var(--font-mono);
+  background: var(--fcc-navy-surface);
+  color: #38bdf8;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+/* Code Example Card inside Instructions */
+.fcc-code-example-card {
+  background: #000000;
+  border: 1px solid var(--fcc-navy-border);
+  border-left: 3px solid var(--fcc-blue);
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin: 16px 0 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #99c9ff;
+  overflow-x: auto;
+}
+
+.fcc-code-example-header {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Bilingual Albanian Layer Box */
+.fcc-shqip-box {
+  background: rgba(254, 172, 50, 0.05);
+  border: 1px solid rgba(254, 172, 50, 0.25);
+  border-radius: 4px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+}
+
+.fcc-shqip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--fcc-gold);
+}
+
+.fcc-shqip-text {
+  font-size: 14px;
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+/* Task Instructions Box */
+.fcc-task-box {
+  background: var(--fcc-navy-surface);
+  border: 1px solid var(--fcc-navy-border);
+  border-left: 4px solid var(--fcc-gold);
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.fcc-task-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--fcc-gold);
+  margin-bottom: 8px;
+}
+
+.fcc-task-instruction {
+  font-size: 14.5px;
+  color: #ffffff;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Test Output and Feedback Area */
+.fcc-test-output {
+  margin-top: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--fcc-navy-border);
+}
+
+.fcc-test-header {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: var(--fcc-navy-surface);
+  border-bottom: 1px solid var(--fcc-navy-border);
+  color: var(--text-faint);
+}
+
+.fcc-test-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fcc-test-item.pass {
+  background: rgba(0, 71, 27, 0.25);
+  color: var(--fcc-green-light);
+}
+
+.fcc-test-item.fail {
+  background: rgba(90, 1, 16, 0.25);
+  color: var(--fcc-red-light);
+}
+
+.fcc-test-feedback-msg {
+  padding: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.fcc-test-feedback-msg.pass {
+  background: var(--fcc-green);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.fcc-test-feedback-msg.fail {
+  background: var(--fcc-red-dark);
+  color: #ffffff;
+}
+
+/* Challenge Action Buttons */
+.fcc-actions-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.fcc-btn-check {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  background: var(--fcc-gold);
+  color: #0a0a23;
+  border: none;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.fcc-btn-check:hover {
+  background: var(--fcc-gold-hover);
+}
+
+.fcc-sub-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.fcc-sub-btn {
+  flex: 1;
+  padding: 8px;
+  background: var(--fcc-navy-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--fcc-navy-border);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 3px;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.fcc-sub-btn:hover {
+  background: var(--fcc-navy-light);
+  color: #ffffff;
+}
+
+/* Middle Pane: Monospace Code Editor */
+.fcc-pane-editor {
+  background: #000000;
+  border-right: 1px solid var(--fcc-navy-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fcc-editor-tabs {
+  height: 38px;
+  background: var(--fcc-navy-surface);
+  border-bottom: 1px solid var(--fcc-navy-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+.fcc-tab-active {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  padding: 4px 8px;
+  background: #000000;
+  border-top: 2px solid var(--fcc-gold);
+  border-radius: 2px 2px 0 0;
+}
+
+.fcc-code-area {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  color: #99c9ff;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 16px;
+  border: none;
+  resize: none;
+  outline: none;
+}
+
+/* Right Pane: Live Preview & Console Output */
+.fcc-pane-preview {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fcc-preview-header {
+  height: 38px;
+  background: var(--fcc-navy-surface);
+  border-bottom: 1px solid var(--fcc-navy-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.fcc-preview-frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #ffffff;
+}
+
+.fcc-console-drawer {
+  height: 140px;
+  background: #0a0a23;
+  border-top: 1px solid var(--fcc-navy-border);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow-y: auto;
+  color: #d0d0d5;
+  flex-shrink: 0;
+}
+
+/* freeCodeCamp Curriculum Landing View */
+.fcc-curriculum-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 20px 100px;
+  overflow-y: auto;
+  height: calc(100vh - 48px);
+}
+
+.fcc-cert-card {
+  background: var(--fcc-navy-surface);
+  border: 1px solid var(--fcc-navy-border);
+  border-radius: 4px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.fcc-cert-header {
+  padding: 20px 24px;
+  background: var(--fcc-navy-surface);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--fcc-navy-border);
+}
+
+.fcc-cert-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.fcc-cert-progress {
+  font-size: 13px;
+  color: var(--fcc-gold);
+  font-weight: 700;
+}
+
+.fcc-block-list {
+  padding: 12px 24px 20px;
+}
+
+.fcc-block-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14.5px;
+  transition: all 0.15s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fcc-block-item:hover {
+  background: var(--fcc-navy-light);
+  color: #ffffff;
+}
+
+.fcc-block-item.completed {
+  color: var(--fcc-green-light);
+}
+
+.fcc-check-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--fcc-navy-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.fcc-block-item.completed .fcc-check-circle {
+  background: var(--fcc-green-light);
+  border-color: var(--fcc-green-light);
+  color: #0a0a23;
+  font-weight: 800;
+}
+
+/* Modal */
+.fcc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 35, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.fcc-modal-content {
+  background: var(--fcc-navy-surface);
+  border: 1px solid var(--fcc-navy-border);
+  border-radius: 4px;
+  max-width: 600px;
+  width: 100%;
+  padding: 28px;
+  color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .fcc-workspace {
+    grid-template-columns: 1fr 1fr;
+  }
+  .fcc-pane-preview {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .fcc-workspace {
+    grid-template-columns: 1fr;
+  }
+  .fcc-pane-editor {
+    display: none;
+  }
+}

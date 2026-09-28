@@ -1,34 +1,22 @@
-import './styles/notebooklm-theme.css';
-import './styles/duolingo-theme.css';
+import './styles/freecodecamp.css';
 import { allCourses, capstoneProjects, findLessonById, getNextAndPrevLessons, searchAcademy } from './curriculum/index.js';
 import { loadAcademyState, saveAcademyState, markLessonCompleted, recordQuizScore, saveCodeDraft, getCodeDraft } from './services/storage.js';
 import { checkAchievements } from './services/achievements.js';
-import { askGeminiTeacher, generateDynamicTask, generateNotebookLMAudioOverview } from './services/gemini.js';
+import { getChallengeHelp } from './services/gemini.js';
 import { runStudentCode } from './components/runner.js';
-import { renderQuizCard } from './components/quiz.js';
 import { renderDashboard } from './components/dashboard.js';
 import { renderPlayground } from './components/playground.js';
 import { renderProjectsHub } from './components/projects.js';
-import { renderAdminPanel } from './components/admin.js';
-import { renderIntroPage, renderDuolingoPath } from './components/intro.js';
-import { sounds } from './services/sound.js';
 
 let appState = loadAcademyState();
-let currentView = "intro"; // "intro" | "path" | "learn" | "playground" | "projects" | "dashboard" | "admin"
+let currentView = "challenge"; // "challenge" | "curriculum" | "playground" | "projects" | "profile"
 let activeLesson = null;
 let activeCourse = null;
-let currentChatHistory = [
-  {
-    sender: "ai",
-    text: "👋 Welcome to **QuolyTech Code Academy**! I am your AI Co-Instructor powered by Gemini. You can ask me to explain concepts, translate to Shqip, debug errors, or generate practice tasks!"
-  }
-];
+let lastTestResult = null; // null | { success: boolean, tests: [], feedback: string }
 
 function initApp() {
-  // Apply saved theme
-  document.documentElement.setAttribute("data-theme", appState.settings.theme);
+  document.documentElement.setAttribute("data-theme", appState.settings.theme || "dark");
 
-  // Set initial lesson
   const savedLesson = findLessonById(appState.progress.currentLessonId);
   if (savedLesson) {
     activeCourse = savedLesson.course;
@@ -39,462 +27,338 @@ function initApp() {
   }
 
   renderApp();
-  setupGlobalShortcuts();
+  setupKeyboardShortcuts();
 }
 
 function renderApp() {
   const root = document.getElementById("app");
   if (!root) return;
 
+  const isSq = appState.settings.language === "sq";
+
   root.innerHTML = `
-    <div class="app-layout">
-      <!-- Top Navigation -->
-      <header class="top-nav">
-        <div class="brand-section">
-          <div class="brand-logo">Q</div>
-          <div class="brand-name">
-            QuolyTech <span style="font-weight: 400; color: var(--text-muted);">Academy</span>
-            <span class="brand-badge">NotebookLM Edition</span>
+    <div class="fcc-app">
+      <!-- freeCodeCamp Top Navigation Bar -->
+      <header class="fcc-nav">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div class="fcc-brand" onclick="switchView('curriculum')">
+            <span class="fcc-brand-logo">( / ) <span>QuolyTech</span> CodeCamp</span>
           </div>
+          <button class="fcc-btn fcc-btn-navy" style="font-size: 13px; padding: 4px 10px;" onclick="switchView('curriculum')">
+            📚 Menu / Curriculum
+          </button>
         </div>
 
-        <!-- Navigation Tabs -->
-        <nav class="nav-tabs">
-          <button class="nav-tab-btn ${currentView === 'intro' ? 'active' : ''}" onclick="switchView('intro')">
-            👋 Intro
+        <div class="fcc-nav-search">
+          <span style="color: var(--text-faint); margin-right: 8px;">🔍</span>
+          <input 
+            type="text" 
+            placeholder="${isSq ? 'Kërko tema, kode, HTML, CSS, React...' : 'Search challenges, HTML, CSS, JavaScript, React...'}" 
+            oninput="handleFccSearch(this.value)"
+          />
+        </div>
+
+        <div class="fcc-nav-actions">
+          <button class="fcc-btn fcc-btn-navy" style="font-size: 13px; padding: 5px 12px;" onclick="toggleLanguage()">
+            🌐 ${isSq ? 'Shqip 🇦🇱' : 'English 🇺🇸'}
           </button>
-          <button class="nav-tab-btn ${currentView === 'path' ? 'active' : ''}" onclick="switchView('path')">
-            🦉 Adventure Map
-          </button>
-          <button class="nav-tab-btn ${currentView === 'learn' ? 'active' : ''}" onclick="switchView('learn')">
-            📖 Studio
-          </button>
-          <button class="nav-tab-btn ${currentView === 'playground' ? 'active' : ''}" onclick="switchView('playground')">
+
+          <button class="fcc-btn fcc-btn-navy" style="font-size: 13px; padding: 5px 10px;" onclick="switchView('playground')">
             ⚡ Playground
           </button>
-          <button class="nav-tab-btn ${currentView === 'projects' ? 'active' : ''}" onclick="switchView('projects')">
+
+          <button class="fcc-btn fcc-btn-navy" style="font-size: 13px; padding: 5px 10px;" onclick="switchView('projects')">
             🚀 Projects
           </button>
-          <button class="nav-tab-btn ${currentView === 'dashboard' ? 'active' : ''}" onclick="switchView('dashboard')">
-            📊 Dashboard
-          </button>
-          <button class="nav-tab-btn ${currentView === 'admin' ? 'active' : ''}" onclick="switchView('admin')">
-            ⚙️ Admin
-          </button>
-        </nav>
 
-        <!-- Utilities -->
-        <div class="nav-controls">
-          <button class="pill-btn" onclick="openSearchModal()">
-            🔍 Search <kbd style="font-size: 10px; background: var(--bg-hover); padding: 1px 4px; border-radius: 3px;">⌘K</kbd>
+          <button class="fcc-btn fcc-btn-navy" style="font-size: 13px; padding: 5px 10px;" onclick="switchView('profile')">
+            🔥 ${appState.progress.streak.days}d Streak
           </button>
 
-          <button class="pill-btn ${appState.settings.beginnerMode ? 'active' : ''}" onclick="toggleBeginnerMode()">
-            🌱 Beginner Mode: ${appState.settings.beginnerMode ? 'ON' : 'OFF'}
-          </button>
-
-          <button class="pill-btn" onclick="toggleLanguage()">
-            🌐 ${appState.settings.language === 'en' ? 'EN' : 'SHQIP'}
-          </button>
-
-          <button class="pill-btn" onclick="openGeminiSettings()">
-            ✨ Gemini API
-          </button>
-
-          <div class="streak-pill">
-            🔥 ${appState.progress.streak.days}d
-          </div>
-
-          <button class="pill-btn" onclick="toggleTheme()">
+          <button class="fcc-btn fcc-btn-navy" style="padding: 5px 10px;" onclick="toggleTheme()">
             ${appState.settings.theme === 'dark' ? '☀️' : '🌙'}
           </button>
         </div>
       </header>
 
-      <!-- Main Workspace -->
-      <main class="notebook-workspace" id="main-workspace">
-        ${renderWorkspaceContent()}
+      <!-- Main Body Viewport -->
+      <main id="fcc-main-view" style="flex: 1; height: calc(100vh - 48px); overflow: hidden;">
+        ${renderCurrentViewContent()}
       </main>
     </div>
 
-    <!-- Modals Container -->
-    <div id="modal-container"></div>
+    <!-- Modals & Overlays Container -->
+    <div id="fcc-modal-container"></div>
   `;
 
-  // Post-render attachments
-  if (currentView === "learn" && activeLesson) {
+  if (currentView === "challenge" && activeLesson) {
     loadSavedCodeOrStarter();
   }
 }
 
-function renderWorkspaceContent() {
-  if (currentView === "intro") {
-    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderIntroPage(appState)}</div>`;
-  }
-  if (currentView === "path") {
-    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderDuolingoPath(appState)}</div>`;
+function renderCurrentViewContent() {
+  if (currentView === "curriculum") {
+    return renderCurriculumView();
   }
   if (currentView === "playground") {
-    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0;">${renderPlayground()}</div>`;
+    return `<div style="height: 100%; overflow: hidden;">${renderPlayground()}</div>`;
   }
   if (currentView === "projects") {
-    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderProjectsHub()}</div>`;
+    return `<div style="height: 100%; overflow-y: auto;">${renderProjectsHub()}</div>`;
   }
-  if (currentView === "dashboard") {
-    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderDashboard(appState)}</div>`;
-  }
-  if (currentView === "admin") {
-    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderAdminPanel()}</div>`;
+  if (currentView === "profile") {
+    return `<div style="height: 100%; overflow-y: auto;">${renderDashboard(appState)}</div>`;
   }
 
-  // "learn" 3-pane layout:
-  return `
-    <!-- Left Sidebar: Curriculum Explorer -->
-    <aside class="sidebar-panel">
-      <div class="sidebar-header">
-        <span class="sidebar-title">Curriculum Sources</span>
-        <span style="font-size: 11px; color: var(--text-faint);">${allCourses.length} Tracks</span>
-      </div>
-      <div class="sidebar-list">
-        ${allCourses.map(course => {
-          const isCurrentCourse = activeCourse?.id === course.id;
-          const courseCompletedCount = course.lessons.filter(l => appState.progress.completedLessons.includes(l.id)).length;
-          return `
-            <div class="course-group">
-              <div class="course-group-header" onclick="selectCourse('${course.id}')">
-                <span>${course.title}</span>
-                <span class="course-progress-tag">${courseCompletedCount}/${course.lessons.length}</span>
-              </div>
-              <ul class="lesson-list">
-                ${course.lessons.map(lesson => {
-                  const isActive = activeLesson?.id === lesson.id;
-                  const isDone = appState.progress.completedLessons.includes(lesson.id);
-                  return `
-                    <li 
-                      class="lesson-item ${isActive ? 'active' : ''} ${isDone ? 'completed' : ''}" 
-                      onclick="selectLesson('${lesson.id}')"
-                    >
-                      <span>${lesson.title}</span>
-                    </li>
-                  `;
-                }).join("")}
-              </ul>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </aside>
-
-    <!-- Center Studio: Lesson Content & Code Editor -->
-    <section class="studio-panel" id="studio-scrollable">
-      ${renderLessonStudio()}
-    </section>
-
-    <!-- Right Panel: NotebookLM AI Co-Teacher & Studio -->
-    <aside class="ai-panel">
-      <div class="ai-panel-header">
-        <div class="ai-panel-title">
-          <span>✨ Gemini AI Teacher</span>
-        </div>
-        <span class="meta-pill" style="font-size: 10px;">${appState.settings.geminiApiKey ? 'Live Gemini 1.5' : 'Academy Engine'}</span>
-      </div>
-
-      <!-- NotebookLM Simulated Audio Overview -->
-      <div class="audio-overview-card">
-        <div class="audio-title">🎙️ Audio Discussion Overview</div>
-        <p class="audio-desc">Simulate a NotebookLM podcast discussion between instructors for this lesson.</p>
-        <button onclick="playNotebookLMAudioOverview()" class="btn-run" style="width: 100%; justify-content: center; font-size: 12px; padding: 6px 12px;">
-          🎧 Generate Audio Overview
-        </button>
-      </div>
-
-      <!-- Quick Action Chips -->
-      <div class="prompt-chips-row">
-        <button class="chip-btn" onclick="sendQuickPrompt('Shpjoma në Shqip të lutem')">🇦🇱 Shqip</button>
-        <button class="chip-btn" onclick="sendQuickPrompt('Give me a simple real-world metaphor')">💡 Metaphor</button>
-        <button class="chip-btn" onclick="sendQuickPrompt('Why is my code failing? Please give me a hint')">🔍 Debug Code</button>
-        <button class="chip-btn" onclick="requestDynamicTask()">🎯 Give Me a Task</button>
-      </div>
-
-      <!-- Chat History -->
-      <div class="chat-history" id="ai-chat-history">
-        ${currentChatHistory.map(msg => `
-          <div class="chat-bubble ${msg.sender}">
-            ${formatMarkdown(msg.text)}
-          </div>
-        `).join("")}
-      </div>
-
-      <!-- AI Prompt Input -->
-      <div class="ai-input-row">
-        <input 
-          type="text" 
-          id="ai-user-input" 
-          class="ai-input-field" 
-          placeholder="Ask teacher anything..." 
-          onkeydown="if(event.key==='Enter') sendChatMessage()"
-        />
-        <button class="btn-send" onclick="sendChatMessage()">➤</button>
-      </div>
-    </aside>
-  `;
+  // Authentic freeCodeCamp 3-Pane Challenge View
+  return renderChallengeWorkspace();
 }
 
-function renderLessonStudio() {
-  if (!activeLesson) return `<div style="padding: 40px; text-align: center;">Select a lesson from the curriculum outline to enter class.</div>`;
+function renderChallengeWorkspace() {
+  if (!activeLesson) return `<div style="padding: 40px; text-align: center;">Select a challenge to begin.</div>`;
 
   const isSq = appState.settings.language === "sq";
   const { prev, next } = getNextAndPrevLessons(activeLesson.id);
 
   return `
-    <!-- Modern High-Tech Classroom Stage Header -->
-    <div class="classroom-stage-header">
-      <div>
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-          <div class="classroom-status-tag">
-            <span class="classroom-status-dot"></span>
-            <span>Live Class in Session</span>
-          </div>
-          <span class="meta-pill" style="color: #6366f1; border-color: rgba(99, 102, 241, 0.3);">
-            Room 101: ${activeCourse.title}
-          </span>
-        </div>
-        <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 14px;">
-          <span>👨‍🏫 <strong>Instructor:</strong> Prof. QuolyTech</span>
-          <span>👥 <strong>Students Live:</strong> 42 online</span>
-          <span>⏱️ <strong>Session:</strong> ~${activeLesson.estimatedMinutes} mins</span>
-        </div>
-      </div>
+    <div class="fcc-workspace">
+      <!-- Pane 1: Instructions, Theory, Code Examples, and Tests -->
+      <div class="fcc-pane-instructions">
+        <!-- Step Breadcrumb -->
+        <div class="fcc-step-badge">${activeCourse.title} • ${activeLesson.module}</div>
 
-      <!-- Quick Section Jump Links -->
-      <div class="classroom-nav-pills">
-        <button onclick="window.jumpToClassroomSection('class-board')" class="classroom-pill-btn active">
-          🎓 Lecture & Board
-        </button>
-        <button onclick="window.jumpToClassroomSection('class-lab')" class="classroom-pill-btn">
-          💻 Coding Lab
-        </button>
-        <button onclick="window.jumpToClassroomSection('class-shqip')" class="classroom-pill-btn">
-          🇦🇱 Notes in Shqip
-        </button>
-        <button onclick="window.jumpToClassroomSection('class-quiz')" class="classroom-pill-btn">
-          📝 Class Quiz
-        </button>
-      </div>
-    </div>
-
-    <article class="lesson-article" style="overflow-y: visible;">
-      <!-- Title & Academic Objectives -->
-      <div style="margin-bottom: 24px;">
-        <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: #6366f1; letter-spacing: 1px; margin-bottom: 6px;">
-          ${activeLesson.module.toUpperCase()} • LECTURE NOTES
-        </div>
-        <h1 class="lesson-main-title" style="font-size: 30px; font-weight: 900; letter-spacing: -0.8px;">
+        <!-- Challenge Title -->
+        <h1 class="fcc-challenge-title">
           ${isSq && activeLesson.titleSq ? activeLesson.titleSq : activeLesson.title}
         </h1>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
-          <span class="meta-pill" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.3); font-weight: 700;">
-            Level: ${activeLesson.difficulty}
-          </span>
-          <span class="meta-pill" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4; border-color: rgba(6, 182, 212, 0.3); font-weight: 700;">
-            Core Stack: ${activeLesson.type.toUpperCase()}
-          </span>
-          <span class="meta-pill" style="background: rgba(168, 85, 247, 0.1); color: #a855f7; border-color: rgba(168, 85, 247, 0.3); font-weight: 700;">
-            Interactive Practice Ready
-          </span>
-        </div>
-      </div>
 
-      <!-- Classroom Interactive Whiteboard / Blackboard -->
-      <div class="classroom-board" id="class-board">
-        <div class="classroom-board-header">
-          <div class="board-tag">
-            <span>📐 Interactive Blackboard • Core Architectural Model</span>
-          </div>
-          <div style="display: flex; gap: 6px;">
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></span>
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #f59e0b;"></span>
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></span>
-          </div>
+        <!-- Metadata Pills -->
+        <div class="fcc-meta-row">
+          <span class="fcc-tag">Difficulty: ${activeLesson.difficulty}</span>
+          <span class="fcc-tag">Stack: ${activeLesson.type.toUpperCase()}</span>
+          <span class="fcc-tag">Est: ${activeLesson.estimatedMinutes} mins</span>
         </div>
 
-        <!-- Concept Blueprint Display -->
-        <div style="padding: 12px 6px;">
-          <div style="color: #38bdf8; font-weight: 700; font-size: 15px; margin-bottom: 8px;">
-            💡 Professor's Real-World Metaphor:
-          </div>
-          <div style="font-size: 16px; font-style: italic; color: #f1f5f9; line-height: 1.6; border-left: 3px solid #6366f1; padding-left: 14px; margin-bottom: 16px;">
-            "${isSq && activeLesson.metaphorSq ? activeLesson.metaphorSq : activeLesson.metaphor}"
-          </div>
-          <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 18px; font-family: var(--font-mono); font-size: 13px; color: #34d399;">
-            ${formatMarkdown(activeLesson.codeExample || '// No syntax preview')}
-          </div>
-        </div>
-      </div>
-
-      <!-- Theoretical Foundation -->
-      <div style="margin-bottom: 32px;">
-        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-          <span style="color: #6366f1;">#</span> Lecture Theory & Core Principles
-        </h2>
-        <div class="theory-content">
+        <!-- Concept Theory & Explanation -->
+        <div class="fcc-description">
           ${formatMarkdown(isSq && activeLesson.theorySq ? activeLesson.theorySq : activeLesson.theory)}
         </div>
-      </div>
 
-      <!-- Bilingual Classroom Notes Layer (Shqip) -->
-      <div class="bilingual-box" id="class-shqip">
-        <div class="bilingual-header">
-          <div class="bilingual-title">
-            <span>🇦🇱 Shënimet e Leksionit në Shqip (Classroom Notes)</span>
+        <!-- Real-World Metaphor Card -->
+        <div style="background: rgba(153, 201, 255, 0.08); border-left: 3px solid var(--fcc-blue); padding: 12px 16px; border-radius: 3px; margin-bottom: 20px;">
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--fcc-blue); margin-bottom: 4px;">
+            💡 Mental Model & Analogy
           </div>
-          <button class="chip-btn" onclick="toggleLanguage()">
-            Gjuha aktuale: ${isSq ? 'Shqip' : 'English'}
+          <div style="font-size: 14px; font-style: italic; color: #ffffff;">
+            "${isSq && activeLesson.metaphorSq ? activeLesson.metaphorSq : activeLesson.metaphor}"
+          </div>
+        </div>
+
+        <!-- Illustrative Code Example Box -->
+        <div class="fcc-code-example-card">
+          <div class="fcc-code-example-header">
+            <span>Example Code to Understand:</span>
+            <span>${activeLesson.type.toUpperCase()}</span>
+          </div>
+          <pre><code>${escapeHtml(activeLesson.codeExample || '// Example code')}</code></pre>
+        </div>
+
+        <!-- Line-by-Line Breakdown -->
+        ${activeLesson.codeExplanation && activeLesson.codeExplanation.length > 0 ? `
+          <div style="margin-bottom: 20px; font-size: 13.5px; color: var(--text-muted);">
+            <div style="font-weight: 700; color: #ffffff; margin-bottom: 6px;">How this code works:</div>
+            <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+              ${activeLesson.codeExplanation.map(line => `<li>${formatMarkdown(line)}</li>`).join("")}
+            </ul>
+          </div>
+        ` : ''}
+
+        <!-- Bilingual Albanian Layer (Shqip) -->
+        <div class="fcc-shqip-box">
+          <div class="fcc-shqip-header">
+            <span>🇦🇱 Shpjegimi në Gjuhën Shqipe</span>
+            <button class="fcc-btn fcc-btn-navy" style="font-size: 11px; padding: 2px 8px;" onclick="toggleLanguage()">
+              ${isSq ? 'English' : 'Shqip'}
+            </button>
+          </div>
+          <div class="fcc-shqip-text">
+            ${activeLesson.theorySq ? formatMarkdown(activeLesson.theorySq) : "Shpjegimi në shqip është gati për këtë ushtrim."}
+          </div>
+        </div>
+
+        <!-- Task / Exercise Instructions -->
+        <div class="fcc-task-box">
+          <div class="fcc-task-title">🎯 Your Challenge Task</div>
+          <div class="fcc-task-instruction">
+            ${isSq && activeLesson.taskSq ? activeLesson.taskSq : activeLesson.task}
+          </div>
+        </div>
+
+        <!-- Test Results Output Box -->
+        <div class="fcc-test-output" id="fcc-test-output" style="${lastTestResult ? 'display: block;' : 'display: none;'}">
+          <div class="fcc-test-header">Test Runner Output</div>
+          <div id="fcc-test-items-list">
+            ${lastTestResult ? renderTestFeedback(lastTestResult) : ''}
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="fcc-actions-bar">
+          <button class="fcc-btn-check" onclick="checkChallengeCode()">
+            ${lastTestResult && lastTestResult.success ? 'Submit and go to next challenge (Ctrl + Enter) →' : 'Check Your Code (Ctrl + Enter)'}
           </button>
+
+          <div class="fcc-sub-actions">
+            <button class="fcc-sub-btn" onclick="openAskForHelpModal()">
+              ❓ Ask for Help
+            </button>
+            <button class="fcc-sub-btn" onclick="openHintModal()">
+              💡 Get a Hint
+            </button>
+            <button class="fcc-sub-btn" onclick="resetChallengeCode()">
+              ↺ Reset Code
+            </button>
+          </div>
         </div>
-        <div style="font-size: 14.5px; color: var(--text-main); line-height: 1.7;">
-          ${activeLesson.theorySq ? formatMarkdown(activeLesson.theorySq) : "Shpjegimi në shqip është aktiv për këtë leksion."}
+
+        <!-- Navigation Footer -->
+        <div style="display: flex; justify-content: space-between; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--fcc-navy-border);">
+          ${prev ? `
+            <button class="fcc-btn fcc-btn-navy" style="font-size: 12px;" onclick="selectLesson('${prev.lessonId}')">
+              ← Previous Challenge
+            </button>
+          ` : `<div></div>`}
+
+          ${next ? `
+            <button class="fcc-btn fcc-btn-navy" style="font-size: 12px;" onclick="selectLesson('${next.lessonId}')">
+              Next Challenge →
+            </button>
+          ` : `<div></div>`}
         </div>
       </div>
 
-      <!-- Hands-On Coding Lab -->
-      <div id="class-lab" style="margin-bottom: 36px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div>
-            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-              <span style="color: #10b981;">💻</span> Hands-On Coding Lab
-            </h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
-              Apply today's lecture theory directly in the code editor. Real-time test grading runs below.
-            </p>
+      <!-- Pane 2: Monospace Code Editor -->
+      <div class="fcc-pane-editor">
+        <div class="fcc-editor-tabs">
+          <div class="fcc-tab-active">
+            ${activeLesson.type === 'html' ? 'index.html' : activeLesson.type === 'css' ? 'styles.css' : activeLesson.type === 'react' ? 'App.jsx' : 'script.js'}
           </div>
-          <span class="meta-pill" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
-            Sandbox: ${activeLesson.type.toUpperCase()}
-          </span>
+          <span style="font-size: 11px; color: var(--text-faint); font-family: var(--font-mono);">UTF-8 • Monospace</span>
         </div>
+        <textarea 
+          id="fcc-code-editor" 
+          class="fcc-code-area" 
+          spellcheck="false" 
+          oninput="handleCodeInput(this.value)"
+        ></textarea>
+      </div>
 
-        <div class="code-studio">
-          <div class="studio-toolbar">
-            <div class="studio-lang-tag">
-              <span>⚡ Terminal & Source Code</span>
-            </div>
-            <div class="studio-actions">
-              <button class="btn-secondary" onclick="resetLessonCode()">↺ Reset Code</button>
-              <button class="btn-run" onclick="executeActiveLessonCode()">▶ Run Lab Code</button>
-            </div>
+      <!-- Pane 3: Live Preview & Console Output -->
+      <div class="fcc-pane-preview">
+        <div class="fcc-preview-header">
+          <span>Browser Preview</span>
+          <span id="fcc-preview-status">Live Sandbox</span>
+        </div>
+        <iframe id="academy-preview-frame" class="fcc-preview-frame"></iframe>
+        
+        <div class="fcc-console-drawer">
+          <div style="font-size: 11px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; font-weight: 700;">
+            Console Output:
           </div>
-
-          <div class="studio-body">
-            <!-- Code Editor -->
-            <div class="editor-wrapper">
-              <textarea 
-                id="lesson-code-editor" 
-                class="code-textarea" 
-                spellcheck="false"
-                oninput="handleCodeInput(this.value)"
-              ></textarea>
-            </div>
-
-            <!-- Live Preview Sandbox -->
-            <div class="preview-wrapper">
-              <iframe id="academy-preview-frame" class="preview-frame"></iframe>
-            </div>
-          </div>
-
-          <!-- Terminal Drawer -->
-          <div class="terminal-drawer" id="academy-terminal">
-            <div class="terminal-header">
-              <span>Console Logs & Output</span>
-              <span id="log-count">0 logs</span>
-            </div>
-            <div id="terminal-lines"></div>
-          </div>
-
-          <!-- Unit Test Results -->
-          <div id="test-results-bar" class="test-results-bar" style="display: none;">
-            <div id="test-status-pill"></div>
-            <div style="font-size: 12px; color: var(--text-faint);">QuolyTech Automated Test Suite</div>
+          <div id="fcc-console-lines" style="display: flex; flex-direction: column; gap: 2px;">
+            <div style="color: var(--text-faint); font-style: italic;">// Logs will appear here upon execution</div>
           </div>
         </div>
       </div>
-
-      <!-- Lab Assignment / Exercise -->
-      <div class="exercise-task-card">
-        <div class="task-title">🎯 Lab Assignment: What You Need To Build</div>
-        <p class="task-text">${isSq && activeLesson.taskSq ? activeLesson.taskSq : activeLesson.task}</p>
-        <div class="task-tools">
-          <button class="btn-secondary" onclick="toggleHint()">💡 Professor's Hint</button>
-          <button class="btn-secondary" onclick="toggleSolution()">🔑 Solution & Analysis</button>
-        </div>
-        <div id="hint-drawer" style="display: none; margin-top: 12px; padding: 14px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); font-size: 13.5px; color: #fbbf24;">
-          <strong>Hint:</strong> ${activeLesson.hint}
-        </div>
-        <div id="solution-drawer" style="display: none; margin-top: 12px; padding: 18px; background: var(--bg-card); border-radius: var(--radius-md); font-size: 13.5px; border: 1px solid var(--border-subtle);">
-          <div style="font-weight: 800; color: #10b981; margin-bottom: 6px;">Reference Solution:</div>
-          <pre style="background: #090d16; padding: 14px; border-radius: 8px; color: #38bdf8; font-family: var(--font-mono); overflow-x: auto; margin-bottom: 8px;"><code>${escapeHtml(activeLesson.solution)}</code></pre>
-          <p style="color: var(--text-muted); line-height: 1.5;">${activeLesson.solutionExplanation}</p>
-        </div>
-      </div>
-
-      <!-- Class Examination / Quiz Section -->
-      <div id="class-quiz" style="margin-top: 36px;">
-        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-          <span style="color: #a855f7;">📝</span> Classroom Verification Exam
-        </h2>
-        ${renderQuizCard(activeLesson.quiz)}
-      </div>
-
-      <!-- Bottom Nav Footer -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding: 24px 0 60px; border-top: 1px solid var(--border-subtle);">
-        ${prev ? `
-          <button class="btn-secondary" onclick="selectLesson('${prev.lessonId}')">
-            ← Previous Lecture
-          </button>
-        ` : `<div></div>`}
-
-        <button class="btn-run" onclick="completeAndNextLesson()">
-          Complete Lecture & Next Room →
-        </button>
-      </div>
-    </article>
+    </div>
   `;
 }
 
-// Global window actions
-window.getAcademyLanguage = function() {
-  return appState.settings.language;
-};
-
-window.enterAcademy = function(targetView = 'learn') {
-  currentView = targetView;
-  renderApp();
-};
-
-window.jumpToClassroomSection = function(sectionId) {
-  const target = document.getElementById(sectionId);
-  const studio = document.getElementById("studio-scrollable");
-  if (target && studio) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    document.querySelectorAll('.classroom-pill-btn').forEach(btn => btn.classList.remove('active'));
-    event?.target?.classList?.add('active');
+function renderTestFeedback(res) {
+  if (res.success) {
+    return `
+      <div class="fcc-test-feedback-msg pass">
+        ✓ 100% Passed! Great work! Click "Submit and go to next challenge" to proceed.
+      </div>
+      ${(res.tests || []).map(t => `
+        <div class="fcc-test-item pass">
+          <span>✓</span>
+          <span>${t.description}</span>
+        </div>
+      `).join("")}
+    `;
   }
-};
 
+  return `
+    <div class="fcc-test-feedback-msg fail">
+      ✗ Your code did not pass all test assertions yet. Check the requirements below.
+    </div>
+    ${(res.tests || []).map(t => `
+      <div class="fcc-test-item ${t.passed ? 'pass' : 'fail'}">
+        <span>${t.passed ? '✓' : '✗'}</span>
+        <span>${t.description}</span>
+      </div>
+    `).join("")}
+  `;
+}
+
+// Curriculum Directory View (Like freeCodeCamp Certification Tracks)
+function renderCurriculumView() {
+  const completed = appState.progress.completedLessons || [];
+
+  return `
+    <div class="fcc-curriculum-container">
+      <div style="text-align: center; margin-bottom: 36px;">
+        <h1 style="font-size: 28px; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
+          QuolyTech CodeCamp Curriculum
+        </h1>
+        <p style="font-size: 15px; color: var(--text-muted); max-width: 600px; margin: 0 auto;">
+          Learn to code with free, structured, interactive certifications. Start from zero and build modern React applications.
+        </p>
+      </div>
+
+      <!-- Certifications List -->
+      ${allCourses.map((course, cIdx) => {
+        const completedCount = course.lessons.filter(l => completed.includes(l.id)).length;
+        const percent = Math.round((completedCount / course.lessons.length) * 100);
+
+        return `
+          <div class="fcc-cert-card">
+            <div class="fcc-cert-header" onclick="toggleCertDropdown('cert-${course.id}')">
+              <div>
+                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--fcc-gold);">
+                  Certification Track 0${cIdx}
+                </span>
+                <div class="fcc-cert-title">${course.title}</div>
+              </div>
+              <div class="fcc-cert-progress">${completedCount}/${course.lessons.length} Completed (${percent}%)</div>
+            </div>
+
+            <div class="fcc-block-list" id="cert-${course.id}">
+              ${course.lessons.map(lesson => {
+                const isDone = completed.includes(lesson.id);
+                return `
+                  <div class="fcc-block-item ${isDone ? 'completed' : ''}" onclick="selectLesson('${lesson.id}'); switchView('challenge');">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div class="fcc-check-circle">${isDone ? '✓' : ''}</div>
+                      <span>${lesson.title}</span>
+                    </div>
+                    <span style="font-size: 12px; color: var(--text-faint); font-family: var(--font-mono);">${lesson.estimatedMinutes}m</span>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+// Global actions
 window.switchView = function(view) {
   currentView = view;
   renderApp();
-};
-
-window.selectCourse = function(courseId) {
-  const c = allCourses.find(item => item.id === courseId);
-  if (c && c.lessons.length > 0) {
-    activeCourse = c;
-    activeLesson = c.lessons[0];
-    appState.progress.currentCourseId = c.id;
-    appState.progress.currentLessonId = activeLesson.id;
-    saveAcademyState(appState);
-    renderApp();
-  }
 };
 
 window.selectLesson = function(lessonId) {
@@ -502,8 +366,9 @@ window.selectLesson = function(lessonId) {
   if (res) {
     activeCourse = res.course;
     activeLesson = res.lesson;
-    appState.progress.currentCourseId = activeCourse.id;
-    appState.progress.currentLessonId = activeLesson.id;
+    lastTestResult = null;
+    appState.progress.currentCourseId = res.course.id;
+    appState.progress.currentLessonId = res.lesson.id;
     saveAcademyState(appState);
     renderApp();
   }
@@ -516,149 +381,160 @@ window.handleCodeInput = function(code) {
 };
 
 window.loadSavedCodeOrStarter = function() {
-  const textarea = document.getElementById("lesson-code-editor");
+  const textarea = document.getElementById("fcc-code-editor");
   if (!textarea || !activeLesson) return;
 
   const saved = getCodeDraft(activeLesson.id);
   textarea.value = saved || activeLesson.starterCode;
 
-  // Run initial preview
+  // Run initial sandbox
   setTimeout(() => {
-    executeActiveLessonCode();
+    runLivePreview();
   }, 100);
 };
 
-window.resetLessonCode = function() {
+window.resetChallengeCode = function() {
   if (!activeLesson) return;
-  const textarea = document.getElementById("lesson-code-editor");
+  const textarea = document.getElementById("fcc-code-editor");
   if (textarea) {
     textarea.value = activeLesson.starterCode;
     saveCodeDraft(activeLesson.id, activeLesson.starterCode);
-    executeActiveLessonCode();
+    lastTestResult = null;
+    renderApp();
   }
 };
 
-window.executeActiveLessonCode = function() {
-  const textarea = document.getElementById("lesson-code-editor");
+function runLivePreview() {
+  const textarea = document.getElementById("fcc-code-editor");
   if (!textarea || !activeLesson) return;
 
   const code = textarea.value;
-  const terminalLines = document.getElementById("terminal-lines");
-  const logCount = document.getElementById("log-count");
-  let count = 0;
+  const consoleLines = document.getElementById("fcc-console-lines");
 
-  if (terminalLines) terminalLines.innerHTML = "";
+  runStudentCode({
+    type: activeLesson.type,
+    code,
+    testAssertions: [],
+    onLog: (log) => {
+      if (log.type === "clear" && consoleLines) {
+        consoleLines.innerHTML = "";
+        return;
+      }
+      if (consoleLines) {
+        const line = document.createElement("div");
+        line.style.color = log.level === "error" ? "#f58383" : "#99c9ff";
+        line.textContent = `> ${log.text}`;
+        consoleLines.appendChild(line);
+      }
+    }
+  });
+}
+
+window.checkChallengeCode = function() {
+  const textarea = document.getElementById("fcc-code-editor");
+  if (!textarea || !activeLesson) return;
+
+  // If already passed and clicked, proceed to next challenge!
+  if (lastTestResult && lastTestResult.success) {
+    completeAndGoNext();
+    return;
+  }
+
+  const code = textarea.value;
+  const consoleLines = document.getElementById("fcc-console-lines");
+  if (consoleLines) consoleLines.innerHTML = "";
 
   runStudentCode({
     type: activeLesson.type,
     code,
     testAssertions: activeLesson.testAssertions,
     onLog: (log) => {
-      if (log.type === "clear") {
-        if (terminalLines) terminalLines.innerHTML = "";
-        count = 0;
-        return;
-      }
-      count++;
-      if (logCount) logCount.textContent = `${count} log${count === 1 ? '' : 's'}`;
-      if (terminalLines) {
-        const div = document.createElement("div");
-        div.className = `terminal-line ${log.level}`;
-        div.textContent = `> ${log.text}`;
-        terminalLines.appendChild(div);
+      if (consoleLines && log.text) {
+        const line = document.createElement("div");
+        line.style.color = log.level === "error" ? "#f58383" : "#99c9ff";
+        line.textContent = `> ${log.text}`;
+        consoleLines.appendChild(line);
       }
     },
     onResult: (res) => {
-      const resultsBar = document.getElementById("test-results-bar");
-      const statusPill = document.getElementById("test-status-pill");
-      if (resultsBar && statusPill) {
-        resultsBar.style.display = "flex";
-        if (res.success) {
-          statusPill.className = "test-pill-success";
-          statusPill.innerHTML = `✅ All tests passed! Ready to proceed.`;
-          // Trigger achievement check
-          const unlocked = checkAchievements();
-          if (unlocked.length > 0) {
-            unlocked.forEach(ach => showAchievementToast(ach));
-          }
-        } else {
-          statusPill.className = "test-pill-fail";
-          statusPill.innerHTML = `❌ Some tests need adjustments. Check task instructions or ask AI Teacher!`;
-        }
+      lastTestResult = res;
+      if (res.success) {
+        markLessonCompleted(activeLesson.id);
+        appState = loadAcademyState();
+        checkAchievements();
       }
+      renderApp();
     }
   });
 };
 
-window.toggleHint = function() {
-  const d = document.getElementById("hint-drawer");
-  if (d) d.style.display = d.style.display === "none" ? "block" : "none";
-};
-
-window.toggleSolution = function() {
-  const d = document.getElementById("solution-drawer");
-  if (d) d.style.display = d.style.display === "none" ? "block" : "none";
-};
-
-window.handleQuizOptionClick = function(selectedIndex) {
-  if (!activeLesson || !activeLesson.quiz) return;
-  const quiz = activeLesson.quiz;
-  const expBox = document.getElementById("quiz-explanation-box");
-  const buttons = document.querySelectorAll(".quiz-opt-btn");
-
-  buttons.forEach((btn, idx) => {
-    btn.disabled = true;
-    if (idx === quiz.correctIndex) {
-      btn.style.borderColor = "var(--brand-emerald)";
-      btn.style.background = "rgba(16, 185, 129, 0.15)";
-      btn.style.color = "var(--brand-emerald)";
-    } else if (idx === selectedIndex) {
-      btn.style.borderColor = "var(--brand-red)";
-      btn.style.background = "rgba(239, 68, 68, 0.15)";
-      btn.style.color = "var(--brand-red)";
-    }
-  });
-
-  if (expBox) {
-    expBox.style.display = "block";
-    const isCorrect = selectedIndex === quiz.correctIndex;
-    if (isCorrect) {
-      expBox.style.background = "rgba(16, 185, 129, 0.1)";
-      expBox.style.color = "var(--brand-emerald)";
-      expBox.style.border = "1px solid rgba(16, 185, 129, 0.3)";
-      expBox.innerHTML = `<strong>Correct! 🎉</strong> ${quiz.explanation}`;
-      recordQuizScore(activeLesson.id, 100);
-    } else {
-      expBox.style.background = "rgba(239, 68, 68, 0.1)";
-      expBox.style.color = "var(--brand-red)";
-      expBox.style.border = "1px solid rgba(239, 68, 68, 0.3)";
-      expBox.innerHTML = `<strong>Incorrect.</strong> ${quiz.explanation}`;
-    }
-  }
-};
-
-window.completeAndNextLesson = function() {
-  if (!activeLesson) return;
+function completeAndGoNext() {
   markLessonCompleted(activeLesson.id);
   appState = loadAcademyState();
-
   const { next } = getNextAndPrevLessons(activeLesson.id);
   if (next) {
     selectLesson(next.lessonId);
   } else {
-    alert("🎉 Congratulations! You have completed all lessons in this track!");
-    switchView("dashboard");
+    alert("🎉 Congratulations! You have completed all challenges in this curriculum track!");
+    switchView("curriculum");
   }
+}
+
+window.openHintModal = function() {
+  if (!activeLesson) return;
+  const modalContainer = document.getElementById("fcc-modal-container");
+  if (!modalContainer) return;
+
+  modalContainer.innerHTML = `
+    <div class="fcc-modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="fcc-modal-content">
+        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 12px; color: var(--fcc-gold);">💡 Challenge Hint</h2>
+        <p style="font-size: 15px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;">
+          ${activeLesson.hint}
+        </p>
+        <div style="display: flex; justify-content: flex-end;">
+          <button class="fcc-btn fcc-btn-gold" onclick="closeModal()">Got it!</button>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+window.openAskForHelpModal = function() {
+  if (!activeLesson) return;
+  const textarea = document.getElementById("fcc-code-editor");
+  const studentCode = textarea ? textarea.value : "";
+  const advice = getChallengeHelp({
+    challenge: activeLesson,
+    studentCode,
+    language: appState.settings.language
+  });
+
+  const modalContainer = document.getElementById("fcc-modal-container");
+  if (!modalContainer) return;
+
+  modalContainer.innerHTML = `
+    <div class="fcc-modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="fcc-modal-content">
+        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 12px; color: #99c9ff;">👨‍🏫 Built-In Instructor Help</h2>
+        <div style="font-size: 14.5px; line-height: 1.6; color: var(--text-muted); margin-bottom: 24px;">
+          ${formatMarkdown(advice)}
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+          <button class="fcc-btn fcc-btn-navy" onclick="closeModal()">Close Help</button>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+window.closeModal = function() {
+  const c = document.getElementById("fcc-modal-container");
+  if (c) c.innerHTML = "";
 };
 
 window.toggleLanguage = function() {
   appState.settings.language = appState.settings.language === "en" ? "sq" : "en";
-  saveAcademyState(appState);
-  renderApp();
-};
-
-window.toggleBeginnerMode = function() {
-  appState.settings.beginnerMode = !appState.settings.beginnerMode;
   saveAcademyState(appState);
   renderApp();
 };
@@ -670,370 +546,30 @@ window.toggleTheme = function() {
   renderApp();
 };
 
-// AI Teacher & Chat
-window.sendChatMessage = async function() {
-  const input = document.getElementById("ai-user-input");
-  if (!input || !input.value.trim()) return;
-
-  const question = input.value.trim();
-  input.value = "";
-
-  currentChatHistory.push({ sender: "user", text: question });
-  updateChatHistoryUI();
-
-  // Show thinking indicator
-  currentChatHistory.push({ sender: "ai", text: "Thinking..." });
-  updateChatHistoryUI();
-
-  const editor = document.getElementById("lesson-code-editor");
-  const studentCode = editor ? editor.value : "";
-
-  const response = await askGeminiTeacher({
-    question,
-    lesson: activeLesson,
-    studentCode,
-    language: appState.settings.language
-  });
-
-  // Replace thinking message
-  currentChatHistory.pop();
-  currentChatHistory.push({ sender: "ai", text: response.text });
-  updateChatHistoryUI();
-};
-
-window.sendQuickPrompt = function(promptText) {
-  const input = document.getElementById("ai-user-input");
-  if (input) {
-    input.value = promptText;
-    sendChatMessage();
+window.toggleCertDropdown = function(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.style.display = el.style.display === "none" ? "block" : "none";
   }
 };
 
-window.requestDynamicTask = function() {
-  if (!activeLesson) return;
-  const task = generateDynamicTask(activeLesson);
-  currentChatHistory.push({
-    sender: "ai",
-    text: `🎯 **Personalized Practice Task:**\n\n**${task.title}**\n${task.desc}\n\n💡 *Hint:* \`${task.hint}\`\n\nTry implementing this in the Playground or right here in the editor!`
-  });
-  updateChatHistoryUI();
-};
-
-window.playNotebookLMAudioOverview = function() {
-  if (!activeLesson) return;
-  const overview = generateNotebookLMAudioOverview(activeLesson);
-  let scriptText = `🎙️ **${overview.title}**\n*Featuring ${overview.hosts.map(h => h.name).join(" & ")}*\n\n`;
-  overview.transcript.forEach(line => {
-    scriptText += `**${line.speaker}:** "${line.text}"\n\n`;
-  });
-
-  currentChatHistory.push({
-    sender: "ai",
-    text: scriptText
-  });
-  updateChatHistoryUI();
-};
-
-function updateChatHistoryUI() {
-  const chatDiv = document.getElementById("ai-chat-history");
-  if (!chatDiv) return;
-  chatDiv.innerHTML = currentChatHistory.map(msg => `
-    <div class="chat-bubble ${msg.sender}">
-      ${formatMarkdown(msg.text)}
-    </div>
-  `).join("");
-  chatDiv.scrollTop = chatDiv.scrollHeight;
-}
-
-// Playground actions
-window.runPlaygroundCode = function() {
-  const editor = document.getElementById("playground-editor");
-  const iframe = document.getElementById("playground-preview-frame");
-  const consoleDiv = document.getElementById("playground-console");
-  if (!editor || !iframe) return;
-
-  if (consoleDiv) consoleDiv.innerHTML = "<div style='color:#64748b;'>// Playground Console Output</div>";
-
-  const code = editor.value;
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-      <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-      <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-      <script src="https://cdn.tailwindcss.com"></script>
-      <style>body { margin: 0; font-family: sans-serif; background: #090d16; color: #fff; }</style>
-    </head>
-    <body>
-      <div id="root"></div>
-      <script>
-        console.log = function(...args) {
-          window.parent.postMessage({ type: 'PLAYGROUND_LOG', text: args.join(' ') }, '*');
-        };
-      </script>
-      <script type="text/babel">
-        try {
-          ${code}
-        } catch(err) {
-          document.getElementById('root').innerHTML = '<div style="color:red; padding:20px;">' + err.message + '</div>';
-        }
-      </script>
-    </body>
-    </html>
-  `;
-
-  iframe.srcdoc = html;
-};
-
-window.loadPlaygroundTemplate = function(val) {
-  const editor = document.getElementById("playground-editor");
-  if (!editor) return;
-
-  if (val === "react-counter") {
-    editor.value = `function InteractiveApp() {
-  const [count, setCount] = React.useState(0);
-  return (
-    <div className="p-8 max-w-sm mx-auto my-10 bg-slate-900 border border-slate-800 rounded-2xl text-center">
-      <h2 className="text-xl font-bold text-blue-400 mb-4">React Counter</h2>
-      <div className="text-4xl font-extrabold mb-6">{count}</div>
-      <div className="flex justify-center gap-3">
-        <button onClick={() => setCount(count + 1)} className="px-4 py-2 bg-blue-600 rounded-lg">Increment</button>
-        <button onClick={() => setCount(0)} className="px-4 py-2 bg-slate-700 rounded-lg">Reset</button>
-      </div>
-    </div>
-  );
-}
-ReactDOM.createRoot(document.getElementById("root")).render(<InteractiveApp />);`;
-  } else if (val === "react-todo") {
-    editor.value = `function TodoApp() {
-  const [items, setItems] = React.useState(["Learn HTML", "Style with CSS", "Master React"]);
-  const [text, setText] = React.useState("");
-
-  return (
-    <div className="p-6 max-w-md mx-auto my-6 bg-slate-900 rounded-xl border border-slate-800">
-      <h2 className="text-lg font-bold text-blue-400 mb-4">React Tasks</h2>
-      <div className="flex gap-2 mb-4">
-        <input value={text} onChange={(e) => setText(e.target.value)} className="flex-1 bg-slate-800 p-2 rounded border border-slate-700 text-sm" placeholder="New task..." />
-        <button onClick={() => { if(text.trim()) { setItems([...items, text]); setText(""); } }} className="px-3 bg-blue-600 rounded text-sm font-semibold">Add</button>
-      </div>
-      <ul className="space-y-2">
-        {items.map((it, i) => (
-          <li key={i} className="p-2 bg-slate-800 rounded flex justify-between text-sm">
-            <span>{it}</span>
-            <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="text-red-400 text-xs">Delete</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-ReactDOM.createRoot(document.getElementById("root")).render(<TodoApp />);`;
-  }
-
-  runPlaygroundCode();
-};
-
-// Capstone Projects
-window.loadCapstoneProject = function(projId) {
-  const p = capstoneProjects.find(item => item.id === projId);
-  if (!p) return;
-  switchView("playground");
-  setTimeout(() => {
-    const editor = document.getElementById("playground-editor");
-    if (editor && p.starterTemplate) {
-      if (p.starterTemplate.type === "react") {
-        editor.value = p.starterTemplate.code;
-      } else {
-        editor.value = `// Project: ${p.title}\n// HTML Structure:\n/*\n${p.starterTemplate.html}\n*/\n\n// JavaScript Engine:\n${p.starterTemplate.js}`;
-      }
-      runPlaygroundCode();
-    }
-  }, 100);
-};
-
-// Modals
-window.openGeminiSettings = function() {
-  const modalContainer = document.getElementById("modal-container");
-  if (!modalContainer) return;
-  modalContainer.innerHTML = `
-    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
-      <div class="modal-content">
-        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">✨ Google Gemini AI Configuration</h2>
-        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px;">
-          Connect your Google Gemini API key to activate live real-time AI pedagogical instruction. If no key is entered, QuolyTech uses our intelligent built-in teaching model.
-        </p>
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: var(--text-main);">Gemini API Key</label>
-          <input 
-            type="password" 
-            id="gemini-key-input" 
-            value="${appState.settings.geminiApiKey || ''}" 
-            placeholder="AIzaSy..." 
-            style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 10px 14px; border-radius: var(--radius-md); color: var(--text-main); font-family: var(--font-mono); font-size: 13px; outline: none;" 
-          />
-        </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-          <button class="btn-run" onclick="saveGeminiKey()">Save Configuration</button>
-        </div>
-      </div>
-    </div>
-  `;
-};
-
-window.saveGeminiKey = function() {
-  const input = document.getElementById("gemini-key-input");
-  if (input) {
-    appState.settings.geminiApiKey = input.value.trim();
-    saveAcademyState(appState);
-    closeModal();
-    alert("✅ Gemini API settings updated successfully!");
+window.handleFccSearch = function(query) {
+  if (!query || query.trim().length < 2) return;
+  const results = searchAcademy(query);
+  if (results.length > 0) {
+    selectLesson(results[0].lessonId);
+    currentView = "challenge";
     renderApp();
   }
 };
 
-window.openCertificateModal = function() {
-  const modalContainer = document.getElementById("modal-container");
-  if (!modalContainer) return;
-  modalContainer.innerHTML = `
-    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
-      <div class="modal-content" style="max-width: 650px; background: #0c1222; border: 2px solid #3b82f6; text-align: center; padding: 40px;">
-        <div style="font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #60a5fa; margin-bottom: 8px;">QuolyTech Code Academy</div>
-        <h1 style="font-size: 26px; font-weight: 900; color: #ffffff; margin-bottom: 12px;">CERTIFICATE OF COMPLETION</h1>
-        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 24px;">This certifies that</p>
-        <div style="font-size: 30px; font-weight: 800; color: #38bdf8; border-bottom: 1px solid #1e293b; display: inline-block; padding-bottom: 8px; margin-bottom: 24px;">${appState.profile.name}</div>
-        <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6; max-width: 480px; margin: 0 auto 32px;">
-          has demonstrated foundational proficiency in <strong>Computer Science Basics, Semantic HTML5, Modern CSS Layouts, JavaScript Algorithms, and React 18 Component Architecture</strong>.
-        </p>
-        <div style="display: flex; justify-content: space-around; border-top: 1px solid #1e293b; padding-top: 20px; font-size: 12px; color: #64748b;">
-          <div>Date: ${new Date().toLocaleDateString()}</div>
-          <div>Verification ID: QTC-${Math.random().toString(36).substring(2, 9).toUpperCase()}</div>
-          <div>Signatory: QuolyTech Board</div>
-        </div>
-        <div style="margin-top: 28px;">
-          <button class="btn-run" onclick="closeModal()">Close Certificate</button>
-        </div>
-      </div>
-    </div>
-  `;
-};
-
-window.openSearchModal = function() {
-  const modalContainer = document.getElementById("modal-container");
-  if (!modalContainer) return;
-  modalContainer.innerHTML = `
-    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
-      <div class="modal-content" style="max-width: 580px;">
-        <div style="position: relative; margin-bottom: 16px;">
-          <input 
-            type="text" 
-            id="academy-search-input" 
-            placeholder="Search lessons, concepts, 'flexbox', 'useState'..." 
-            oninput="handleSearchQuery(this.value)"
-            autofocus
-            style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 12px 18px; border-radius: var(--radius-lg); color: var(--text-main); font-size: 14px; outline: none;" 
-          />
-        </div>
-        <div id="search-results-list" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-          <div style="color: var(--text-faint); font-size: 13px; text-align: center; padding: 20px;">Type to search curriculum...</div>
-        </div>
-      </div>
-    </div>
-  `;
-  setTimeout(() => {
-    document.getElementById("academy-search-input")?.focus();
-  }, 50);
-};
-
-window.handleSearchQuery = function(q) {
-  const list = document.getElementById("search-results-list");
-  if (!list) return;
-
-  const results = searchAcademy(q);
-  if (results.length === 0) {
-    list.innerHTML = `<div style="color: var(--text-faint); font-size: 13px; text-align: center; padding: 20px;">No matching lessons found.</div>`;
-    return;
-  }
-
-  list.innerHTML = results.map(res => `
-    <div 
-      onclick="selectLesson('${res.lessonId}'); closeModal();"
-      style="padding: 12px 16px; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); cursor: pointer; display: flex; justify-content: space-between; align-items: center;"
-    >
-      <div>
-        <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">${res.title}</div>
-        <div style="font-size: 12px; color: var(--text-muted);">${res.courseTitle}</div>
-      </div>
-      <span class="meta-pill" style="font-size: 10px;">${res.difficulty}</span>
-    </div>
-  `).join("");
-};
-
-window.closeModal = function() {
-  const modalContainer = document.getElementById("modal-container");
-  if (modalContainer) modalContainer.innerHTML = "";
-};
-
-window.exportAcademyData = function() {
-  const data = JSON.stringify(allCourses, null, 2);
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "quolytech-academy-curriculum.json";
-  a.click();
-};
-
-function showAchievementToast(ach) {
-  const toast = document.createElement("div");
-  toast.style.position = "fixed";
-  toast.style.bottom = "24px";
-  toast.style.right = "24px";
-  toast.style.background = "linear-gradient(135deg, #1e293b, #0f172a)";
-  toast.style.border = "2px solid #3b82f6";
-  toast.style.color = "#ffffff";
-  toast.style.padding = "16px 20px";
-  toast.style.borderRadius = "14px";
-  toast.style.boxShadow = "0 20px 25px -5px rgba(0,0,0,0.6)";
-  toast.style.zIndex = "9999";
-  toast.style.display = "flex";
-  toast.style.alignItems = "center";
-  toast.style.gap = "12px";
-
-  toast.innerHTML = `
-    <div style="font-size: 28px;">🏆</div>
-    <div>
-      <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #60a5fa;">Achievement Unlocked!</div>
-      <div style="font-size: 14px; font-weight: 700;">${ach.title}</div>
-      <div style="font-size: 12px; color: #94a3b8;">${ach.desc}</div>
-    </div>
-  `;
-
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.remove();
-  }, 4500);
-}
-
-function setupGlobalShortcuts() {
+function setupKeyboardShortcuts() {
   window.addEventListener("keydown", (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+    // Ctrl + Enter or Cmd + Enter checks code! (signature freeCodeCamp shortcut)
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
-      openSearchModal();
-    }
-  });
-
-  window.addEventListener("message", (e) => {
-    if (e.data && e.data.type === "PLAYGROUND_LOG") {
-      const consoleDiv = document.getElementById("playground-console");
-      if (consoleDiv) {
-        const line = document.createElement("div");
-        line.style.color = "#38bdf8";
-        line.textContent = `> ${e.data.text}`;
-        consoleDiv.appendChild(line);
+      if (currentView === "challenge") {
+        checkChallengeCode();
       }
     }
   });
