@@ -5,7 +5,7 @@ export function renderIntroPage(state, onCompleteOnboarding) {
   const isSq = state.settings.language === "sq";
 
   return `
-    <div style="min-height: 100vh; background: var(--bg-primary); display: flex; flex-direction: column; overflow-y: auto;">
+    <div style="min-height: 100%; background: var(--bg-primary); display: flex; flex-direction: column; padding-bottom: 80px;">
       <!-- Top Simple Header -->
       <div style="padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; width: 100%;">
         <div style="display: flex; align-items: center; gap: 12px;">

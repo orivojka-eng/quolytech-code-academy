@@ -59,20 +59,32 @@
   padding: 0;
 }
 
-body {
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
   color: var(--text-main);
   line-height: 1.6;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* NotebookLM Main App Layout */
+/* NotebookLM & Classroom Main App Layout */
 .app-layout {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* 3-Column Notebook / Classroom Workspace */
+.notebook-workspace {
+  display: grid;
+  grid-template-columns: 280px 1fr 340px;
+  height: calc(100vh - 60px);
+  min-height: 0; /* CRITICAL for grid overflow scrolling! */
   overflow: hidden;
 }
 
@@ -225,7 +237,9 @@ body {
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sidebar-header {
@@ -316,18 +330,129 @@ body {
   font-weight: bold;
 }
 
-/* Center Panel: Interactive Studio Notebook */
+/* Center Panel: Classroom Studio Notebook */
 .studio-panel {
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
-  overflow-y: auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
   border-right: 1px solid var(--border-subtle);
 }
 
+/* Classroom Stage Header */
+.classroom-stage-header {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1), rgba(16, 185, 129, 0.08));
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 20px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.classroom-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.classroom-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.classroom-nav-pills {
+  display: flex;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+}
+
+.classroom-pill-btn {
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.classroom-pill-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.classroom-pill-btn.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
+}
+
+/* Classroom Interactive Whiteboard / Blackboard */
+.classroom-board {
+  background: #090e17;
+  border: 2px solid rgba(99, 102, 241, 0.3);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.classroom-board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 10px;
+}
+
+.board-tag {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .lesson-article {
-  padding: 32px 40px;
-  max-width: 900px;
+  padding: 32px 40px 80px; /* generous bottom padding so nothing gets cut off */
+  max-width: 960px;
   margin: 0 auto;
   width: 100%;
 }

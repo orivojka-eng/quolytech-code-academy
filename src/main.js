@@ -129,22 +129,22 @@ function renderApp() {
 
 function renderWorkspaceContent() {
   if (currentView === "intro") {
-    return `<div style="grid-column: 1 / -1; height: 100%; overflow-y: auto;">${renderIntroPage(appState)}</div>`;
+    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderIntroPage(appState)}</div>`;
   }
   if (currentView === "path") {
-    return `<div style="grid-column: 1 / -1; height: 100%; overflow-y: auto;">${renderDuolingoPath(appState)}</div>`;
+    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderDuolingoPath(appState)}</div>`;
   }
   if (currentView === "playground") {
-    return `<div style="grid-column: 1 / -1; height: 100%;">${renderPlayground()}</div>`;
+    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0;">${renderPlayground()}</div>`;
   }
   if (currentView === "projects") {
-    return `<div style="grid-column: 1 / -1; height: 100%; overflow-y: auto;">${renderProjectsHub()}</div>`;
+    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderProjectsHub()}</div>`;
   }
   if (currentView === "dashboard") {
-    return `<div style="grid-column: 1 / -1; height: 100%; overflow-y: auto;">${renderDashboard(appState)}</div>`;
+    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderDashboard(appState)}</div>`;
   }
   if (currentView === "admin") {
-    return `<div style="grid-column: 1 / -1; height: 100%; overflow-y: auto;">${renderAdminPanel()}</div>`;
+    return `<div style="grid-column: 1 / -1; height: 100%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;">${renderAdminPanel()}</div>`;
   }
 
   // "learn" 3-pane layout:
@@ -241,131 +241,219 @@ function renderWorkspaceContent() {
 }
 
 function renderLessonStudio() {
-  if (!activeLesson) return `<div style="padding: 40px; text-align: center;">Select a lesson to begin.</div>`;
+  if (!activeLesson) return `<div style="padding: 40px; text-align: center;">Select a lesson from the curriculum outline to enter class.</div>`;
 
   const isSq = appState.settings.language === "sq";
   const { prev, next } = getNextAndPrevLessons(activeLesson.id);
 
   return `
-    <article class="lesson-article">
-      <!-- Breadcrumb -->
-      <div class="lesson-breadcrumb">${activeCourse.title} • ${activeLesson.module}</div>
-
-      <!-- Main Title -->
-      <h1 class="lesson-main-title">${isSq && activeLesson.titleSq ? activeLesson.titleSq : activeLesson.title}</h1>
-
-      <!-- Meta Bar -->
-      <div class="lesson-meta-bar">
-        <span class="meta-pill">⏱️ ${activeLesson.estimatedMinutes} mins</span>
-        <span class="meta-pill">🎯 ${activeLesson.difficulty}</span>
-        <span class="meta-pill">🏷️ ${activeLesson.type.toUpperCase()}</span>
-        <span class="meta-pill" style="color: var(--brand-emerald);">✓ Beginner-First</span>
+    <!-- Modern High-Tech Classroom Stage Header -->
+    <div class="classroom-stage-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+          <div class="classroom-status-tag">
+            <span class="classroom-status-dot"></span>
+            <span>Live Class in Session</span>
+          </div>
+          <span class="meta-pill" style="color: #6366f1; border-color: rgba(99, 102, 241, 0.3);">
+            Room 101: ${activeCourse.title}
+          </span>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 14px;">
+          <span>👨‍🏫 <strong>Instructor:</strong> Prof. QuolyTech</span>
+          <span>👥 <strong>Students Live:</strong> 42 online</span>
+          <span>⏱️ <strong>Session:</strong> ~${activeLesson.estimatedMinutes} mins</span>
+        </div>
       </div>
 
-      <!-- Bilingual Albanian Box (Shqip Layer) -->
-      <div class="bilingual-box">
+      <!-- Quick Section Jump Links -->
+      <div class="classroom-nav-pills">
+        <button onclick="window.jumpToClassroomSection('class-board')" class="classroom-pill-btn active">
+          🎓 Lecture & Board
+        </button>
+        <button onclick="window.jumpToClassroomSection('class-lab')" class="classroom-pill-btn">
+          💻 Coding Lab
+        </button>
+        <button onclick="window.jumpToClassroomSection('class-shqip')" class="classroom-pill-btn">
+          🇦🇱 Notes in Shqip
+        </button>
+        <button onclick="window.jumpToClassroomSection('class-quiz')" class="classroom-pill-btn">
+          📝 Class Quiz
+        </button>
+      </div>
+    </div>
+
+    <article class="lesson-article" style="overflow-y: visible;">
+      <!-- Title & Academic Objectives -->
+      <div style="margin-bottom: 24px;">
+        <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: #6366f1; letter-spacing: 1px; margin-bottom: 6px;">
+          ${activeLesson.module.toUpperCase()} • LECTURE NOTES
+        </div>
+        <h1 class="lesson-main-title" style="font-size: 30px; font-weight: 900; letter-spacing: -0.8px;">
+          ${isSq && activeLesson.titleSq ? activeLesson.titleSq : activeLesson.title}
+        </h1>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+          <span class="meta-pill" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.3); font-weight: 700;">
+            Level: ${activeLesson.difficulty}
+          </span>
+          <span class="meta-pill" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4; border-color: rgba(6, 182, 212, 0.3); font-weight: 700;">
+            Core Stack: ${activeLesson.type.toUpperCase()}
+          </span>
+          <span class="meta-pill" style="background: rgba(168, 85, 247, 0.1); color: #a855f7; border-color: rgba(168, 85, 247, 0.3); font-weight: 700;">
+            Interactive Practice Ready
+          </span>
+        </div>
+      </div>
+
+      <!-- Classroom Interactive Whiteboard / Blackboard -->
+      <div class="classroom-board" id="class-board">
+        <div class="classroom-board-header">
+          <div class="board-tag">
+            <span>📐 Interactive Blackboard • Core Architectural Model</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></span>
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #f59e0b;"></span>
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></span>
+          </div>
+        </div>
+
+        <!-- Concept Blueprint Display -->
+        <div style="padding: 12px 6px;">
+          <div style="color: #38bdf8; font-weight: 700; font-size: 15px; margin-bottom: 8px;">
+            💡 Professor's Real-World Metaphor:
+          </div>
+          <div style="font-size: 16px; font-style: italic; color: #f1f5f9; line-height: 1.6; border-left: 3px solid #6366f1; padding-left: 14px; margin-bottom: 16px;">
+            "${isSq && activeLesson.metaphorSq ? activeLesson.metaphorSq : activeLesson.metaphor}"
+          </div>
+          <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 18px; font-family: var(--font-mono); font-size: 13px; color: #34d399;">
+            ${formatMarkdown(activeLesson.codeExample || '// No syntax preview')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Theoretical Foundation -->
+      <div style="margin-bottom: 32px;">
+        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+          <span style="color: #6366f1;">#</span> Lecture Theory & Core Principles
+        </h2>
+        <div class="theory-content">
+          ${formatMarkdown(isSq && activeLesson.theorySq ? activeLesson.theorySq : activeLesson.theory)}
+        </div>
+      </div>
+
+      <!-- Bilingual Classroom Notes Layer (Shqip) -->
+      <div class="bilingual-box" id="class-shqip">
         <div class="bilingual-header">
           <div class="bilingual-title">
-            <span>🇦🇱 Shpjegimi në Gjuhën Shqipe</span>
+            <span>🇦🇱 Shënimet e Leksionit në Shqip (Classroom Notes)</span>
           </div>
           <button class="chip-btn" onclick="toggleLanguage()">
-            Kalo në: ${isSq ? 'English' : 'Shqip'}
+            Gjuha aktuale: ${isSq ? 'Shqip' : 'English'}
           </button>
         </div>
-        <div style="font-size: 14.5px; color: var(--text-main); line-height: 1.6;">
-          ${activeLesson.theorySq ? formatMarkdown(activeLesson.theorySq) : "Shpjegimi në shqip është aktiv për këtë mësim."}
+        <div style="font-size: 14.5px; color: var(--text-main); line-height: 1.7;">
+          ${activeLesson.theorySq ? formatMarkdown(activeLesson.theorySq) : "Shpjegimi në shqip është aktiv për këtë leksion."}
         </div>
       </div>
 
-      <!-- Metaphor Box -->
-      <div class="metaphor-box">
-        <div class="metaphor-title">💡 Real-Life Metaphor / Analogi nga Jeta Reale</div>
-        <div class="metaphor-text">
-          "${isSq && activeLesson.metaphorSq ? activeLesson.metaphorSq : activeLesson.metaphor}"
+      <!-- Hands-On Coding Lab -->
+      <div id="class-lab" style="margin-bottom: 36px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+              <span style="color: #10b981;">💻</span> Hands-On Coding Lab
+            </h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+              Apply today's lecture theory directly in the code editor. Real-time test grading runs below.
+            </p>
+          </div>
+          <span class="meta-pill" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
+            Sandbox: ${activeLesson.type.toUpperCase()}
+          </span>
+        </div>
+
+        <div class="code-studio">
+          <div class="studio-toolbar">
+            <div class="studio-lang-tag">
+              <span>⚡ Terminal & Source Code</span>
+            </div>
+            <div class="studio-actions">
+              <button class="btn-secondary" onclick="resetLessonCode()">↺ Reset Code</button>
+              <button class="btn-run" onclick="executeActiveLessonCode()">▶ Run Lab Code</button>
+            </div>
+          </div>
+
+          <div class="studio-body">
+            <!-- Code Editor -->
+            <div class="editor-wrapper">
+              <textarea 
+                id="lesson-code-editor" 
+                class="code-textarea" 
+                spellcheck="false"
+                oninput="handleCodeInput(this.value)"
+              ></textarea>
+            </div>
+
+            <!-- Live Preview Sandbox -->
+            <div class="preview-wrapper">
+              <iframe id="academy-preview-frame" class="preview-frame"></iframe>
+            </div>
+          </div>
+
+          <!-- Terminal Drawer -->
+          <div class="terminal-drawer" id="academy-terminal">
+            <div class="terminal-header">
+              <span>Console Logs & Output</span>
+              <span id="log-count">0 logs</span>
+            </div>
+            <div id="terminal-lines"></div>
+          </div>
+
+          <!-- Unit Test Results -->
+          <div id="test-results-bar" class="test-results-bar" style="display: none;">
+            <div id="test-status-pill"></div>
+            <div style="font-size: 12px; color: var(--text-faint);">QuolyTech Automated Test Suite</div>
+          </div>
         </div>
       </div>
 
-      <!-- Theory Explanation -->
-      <div class="theory-content">
-        ${formatMarkdown(isSq && activeLesson.theorySq ? activeLesson.theorySq : activeLesson.theory)}
-      </div>
-
-      <!-- Interactive Code Studio -->
-      <div class="code-studio">
-        <div class="studio-toolbar">
-          <div class="studio-lang-tag">
-            <span>⚡ ${activeLesson.type.toUpperCase()} Studio</span>
-          </div>
-          <div class="studio-actions">
-            <button class="btn-secondary" onclick="resetLessonCode()">↺ Reset</button>
-            <button class="btn-run" onclick="executeActiveLessonCode()">▶ Run Code</button>
-          </div>
-        </div>
-
-        <div class="studio-body">
-          <!-- Code Editor -->
-          <div class="editor-wrapper">
-            <textarea 
-              id="lesson-code-editor" 
-              class="code-textarea" 
-              spellcheck="false"
-              oninput="handleCodeInput(this.value)"
-            ></textarea>
-          </div>
-
-          <!-- Live Preview Sandbox -->
-          <div class="preview-wrapper">
-            <iframe id="academy-preview-frame" class="preview-frame"></iframe>
-          </div>
-        </div>
-
-        <!-- Terminal & Logs Drawer -->
-        <div class="terminal-drawer" id="academy-terminal">
-          <div class="terminal-header">
-            <span>Console Output</span>
-            <span id="log-count">0 logs</span>
-          </div>
-          <div id="terminal-lines"></div>
-        </div>
-
-        <!-- Unit Test Results -->
-        <div id="test-results-bar" class="test-results-bar" style="display: none;">
-          <div id="test-status-pill"></div>
-          <div style="font-size: 12px; color: var(--text-faint);">QuolyTech Test Runner</div>
-        </div>
-      </div>
-
-      <!-- Exercise Task Card -->
+      <!-- Lab Assignment / Exercise -->
       <div class="exercise-task-card">
-        <div class="task-title">🎯 Your Coding Task</div>
+        <div class="task-title">🎯 Lab Assignment: What You Need To Build</div>
         <p class="task-text">${isSq && activeLesson.taskSq ? activeLesson.taskSq : activeLesson.task}</p>
         <div class="task-tools">
-          <button class="btn-secondary" onclick="toggleHint()">💡 Need a Hint?</button>
-          <button class="btn-secondary" onclick="toggleSolution()">🔑 Reveal Solution</button>
+          <button class="btn-secondary" onclick="toggleHint()">💡 Professor's Hint</button>
+          <button class="btn-secondary" onclick="toggleSolution()">🔑 Solution & Analysis</button>
         </div>
-        <div id="hint-drawer" style="display: none; margin-top: 12px; padding: 12px; background: var(--bg-card); border-radius: var(--radius-md); font-size: 13px; color: var(--brand-amber);">
+        <div id="hint-drawer" style="display: none; margin-top: 12px; padding: 14px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); font-size: 13.5px; color: #fbbf24;">
           <strong>Hint:</strong> ${activeLesson.hint}
         </div>
-        <div id="solution-drawer" style="display: none; margin-top: 12px; padding: 16px; background: var(--bg-card); border-radius: var(--radius-md); font-size: 13px;">
-          <div style="font-weight: 700; color: var(--brand-emerald); margin-bottom: 6px;">Reference Solution:</div>
-          <pre style="background: #090d16; padding: 12px; border-radius: 6px; color: #38bdf8; font-family: var(--font-mono); overflow-x: auto;"><code>${escapeHtml(activeLesson.solution)}</code></pre>
-          <p style="margin-top: 8px; color: var(--text-muted);">${activeLesson.solutionExplanation}</p>
+        <div id="solution-drawer" style="display: none; margin-top: 12px; padding: 18px; background: var(--bg-card); border-radius: var(--radius-md); font-size: 13.5px; border: 1px solid var(--border-subtle);">
+          <div style="font-weight: 800; color: #10b981; margin-bottom: 6px;">Reference Solution:</div>
+          <pre style="background: #090d16; padding: 14px; border-radius: 8px; color: #38bdf8; font-family: var(--font-mono); overflow-x: auto; margin-bottom: 8px;"><code>${escapeHtml(activeLesson.solution)}</code></pre>
+          <p style="color: var(--text-muted); line-height: 1.5;">${activeLesson.solutionExplanation}</p>
         </div>
       </div>
 
-      <!-- Quiz Section -->
-      ${renderQuizCard(activeLesson.quiz)}
+      <!-- Class Examination / Quiz Section -->
+      <div id="class-quiz" style="margin-top: 36px;">
+        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+          <span style="color: #a855f7;">📝</span> Classroom Verification Exam
+        </h2>
+        ${renderQuizCard(activeLesson.quiz)}
+      </div>
 
       <!-- Bottom Nav Footer -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding: 24px 0 60px; border-top: 1px solid var(--border-subtle);">
         ${prev ? `
           <button class="btn-secondary" onclick="selectLesson('${prev.lessonId}')">
-            ← Previous Lesson
+            ← Previous Lecture
           </button>
         ` : `<div></div>`}
 
         <button class="btn-run" onclick="completeAndNextLesson()">
-          Mark Completed & Next →
+          Complete Lecture & Next Room →
         </button>
       </div>
     </article>
@@ -380,6 +468,16 @@ window.getAcademyLanguage = function() {
 window.enterAcademy = function(targetView = 'learn') {
   currentView = targetView;
   renderApp();
+};
+
+window.jumpToClassroomSection = function(sectionId) {
+  const target = document.getElementById(sectionId);
+  const studio = document.getElementById("studio-scrollable");
+  if (target && studio) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.classroom-pill-btn').forEach(btn => btn.classList.remove('active'));
+    event?.target?.classList?.add('active');
+  }
 };
 
 window.switchView = function(view) {
